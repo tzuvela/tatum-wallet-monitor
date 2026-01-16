@@ -3,6 +3,7 @@ import json
 import requests
 from requests.exceptions import HTTPError
 from dotenv import load_dotenv
+from datetime import datetime, timezone
 
 load_dotenv()
 API_KEY = os.getenv("TATUM_API_KEY")
@@ -44,6 +45,23 @@ def get_eth_transactions(address: str, limit: int = 5) -> dict:
     response.raise_for_status()
     return response.json()
 
+def print_transactions(transactions: dict, truncate: bool = True):
+    print("\nRecent transactions:")
+    for tx in transactions.get("result", []):
+        if truncate:
+                short_hash = tx["hash"][:10] + "..."
+                from_addr = tx["counterAddress"][:10] + "..."
+                to_addr = tx["address"][:10] + "..."
+        else:
+             short_hash = tx["hash"]
+             from_addr = tx["counterAddress"]
+             to_addr = tx["address"]
+        amount = tx["amount"]
+        block = tx["blockNumber"]
+
+        ts = datetime.fromtimestamp(int(tx["timestamp"])/1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        print(f"{short_hash} | {from_addr} -> {to_addr} | {amount} | Block {block} | {ts}")
+
 if __name__ == "__main__":
     # Fetch balance
     balance = get_eth_balance(ADDRESS)
@@ -53,4 +71,4 @@ if __name__ == "__main__":
     # Fetch recent transactions, v4 endpoint:
     transactions = get_eth_transactions(ADDRESS, limit=5)
     print("\nRecent transactions:")
-    print(json.dumps(transactions, indent=2))
+    print_transactions(transactions)
