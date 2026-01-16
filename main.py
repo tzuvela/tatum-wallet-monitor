@@ -2,6 +2,7 @@ import os
 import json
 import requests
 from requests.exceptions import HTTPError
+from requests.exceptions import ReadTimeout
 from dotenv import load_dotenv
 from datetime import datetime, timezone
 
@@ -14,7 +15,15 @@ if not API_KEY:
 BASE_URL = "https://api.tatum.io"
 
 #example Sepolia address
-ADDRESS = "0x5FF137D4B0FDCD49DCA30C7CF57E578A026D2789"
+CHAIN = os.getenv("CHAIN")
+ADDRESS = os.getenv("WALLET_ADDRESS")
+if not CHAIN:
+     raise RuntimeError("CHAIN not set in .env")
+if not ADDRESS:
+     raise RuntimeError("ADDRESS not set in .env")
+
+session = requests.Session()
+session.headers.update({"x-api-key": API_KEY, "accept": "application/json"})
 
 def get_eth_balance(address: str) -> dict:
     url = f"{BASE_URL}/v3/ethereum/account/balance/{address}"
@@ -36,14 +45,18 @@ def get_eth_transactions(address: str, limit: int = 5) -> dict:
         "accept": "application/json",
     }
     params = {
-        "chain": "ethereum-sepolia", 
-        "addresses": address,
+        "chain": CHAIN, 
+        "addresses": [address],
         "pageSize": limit,
         "sort": "DESC"
     }
-    response = requests.get(url, headers=headers, params= params, timeout =15)
-    response.raise_for_status()
-    return response.json()
+    try:
+            response = requests.get(url, headers=headers, params= params, timeout =(3, 15))
+            response.raise_for_status()
+            return response.json()
+    except ReadTimeout:
+         print("Transaction fetch timed out")
+         return{"result": []}
 
 def print_transactions(transactions: dict, truncate: bool = True):
     print("\nRecent transactions:")
@@ -70,5 +83,4 @@ if __name__ == "__main__":
 
     # Fetch recent transactions, v4 endpoint:
     transactions = get_eth_transactions(ADDRESS, limit=5)
-    print("\nRecent transactions:")
     print_transactions(transactions)
