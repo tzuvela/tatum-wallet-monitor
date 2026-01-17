@@ -1,4 +1,5 @@
 Tatum wallet monitor
+Exports recent transaction history to transactions.csv for record-keeping
 
 API / chain:
 
