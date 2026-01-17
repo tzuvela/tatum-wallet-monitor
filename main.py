@@ -1,5 +1,6 @@
 import os
 import json
+import csv
 import requests
 from requests.exceptions import HTTPError
 from requests.exceptions import ReadTimeout
@@ -14,13 +15,13 @@ if not API_KEY:
 
 BASE_URL = "https://api.tatum.io"
 
-#example Sepolia address
+# example Sepolia address
 CHAIN = os.getenv("CHAIN")
-ADDRESS = os.getenv("WALLET_ADDRESS")
 if not CHAIN:
-     raise RuntimeError("CHAIN not set in .env")
+    raise RuntimeError("CHAIN not set in .env")
+ADDRESS = os.getenv("WALLET_ADDRESS")
 if not ADDRESS:
-     raise RuntimeError("ADDRESS not set in .env")
+    raise RuntimeError("ADDRESS not set in .env")
 
 session = requests.Session()
 session.headers.update({"x-api-key": API_KEY, "accept": "application/json"})
@@ -51,30 +52,62 @@ def get_eth_transactions(address: str, limit: int = 5) -> dict:
         "sort": "DESC"
     }
     try:
-            response = requests.get(url, headers=headers, params= params, timeout =(3, 15))
-            response.raise_for_status()
-            return response.json()
+        response = requests.get(url, headers= headers, params= params, timeout= (3, 20))
+        response.raise_for_status()           
+        return response.json()
     except ReadTimeout:
-         print("Transaction fetch timed out")
-         return{"result": []}
+        print("Transaction fetch timed out")
+        return{"result": []}
 
 def print_transactions(transactions: dict, truncate: bool = True):
     print("\nRecent transactions:")
     for tx in transactions.get("result", []):
         if truncate:
-                short_hash = tx["hash"][:10] + "..."
-                from_addr = tx["counterAddress"][:10] + "..."
-                to_addr = tx["address"][:10] + "..."
+            short_hash = tx["hash"][:10] + "..."
+            from_addr = tx["counterAddress"][:10] + "..."
+            to_addr = tx["address"][:10] + "..."
         else:
-             short_hash = tx["hash"]
-             from_addr = tx["counterAddress"]
-             to_addr = tx["address"]
+            short_hash = tx["hash"]
+            from_addr = tx["counterAddress"]
+            to_addr = tx["address"]
         amount = tx["amount"]
         block = tx["blockNumber"]
 
         ts = datetime.fromtimestamp(int(tx["timestamp"])/1000, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         print(f"{short_hash} | {from_addr} -> {to_addr} | {amount} | Block {block} | {ts}")
 
+def export_transactions(transactions: dict, filename: str = "transactions.csv"):
+    fields = [
+        "timestamp",
+        "hash",
+        "from_address",
+        "to_address",
+        "amount",
+        "block",
+        "chain"
+    ]
+
+    with open(filename, mode ="w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+
+        for tx in transactions.get("result", []):
+            ts = datetime.fromtimestamp(
+                int(tx["timestamp"]) /1000,
+                tz=timezone.utc
+            ).strftime("%Y-%m-%d %H:%M:%S")
+
+            writer.writerow({
+                "timestamp": ts,
+                "hash": tx["hash"],
+                "from_address": tx["counterAddress"],
+                "to_address": tx["address"],
+                "amount": tx["amount"],
+                "block": tx["blockNumber"],
+                "chain": tx["chain"]
+
+            })
+        print(f"Transactions exported to {filename}")
 if __name__ == "__main__":
     # Fetch balance
     balance = get_eth_balance(ADDRESS)
@@ -84,3 +117,4 @@ if __name__ == "__main__":
     # Fetch recent transactions, v4 endpoint:
     transactions = get_eth_transactions(ADDRESS, limit=5)
     print_transactions(transactions)
+    export_transactions(transactions)
