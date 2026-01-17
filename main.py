@@ -30,7 +30,7 @@ def get_eth_balance(address: str) -> dict:
     url = f"{BASE_URL}/v3/ethereum/account/balance/{address}"
     headers = {"x-api-key": API_KEY}
 
-    response = requests.get(url, headers=headers, timeout = 10)
+    response = session.get(url, headers=headers, timeout = 10)
     response.raise_for_status()
 
     return response.json()
@@ -52,7 +52,7 @@ def get_eth_transactions(address: str, limit: int = 5) -> dict:
         "sort": "DESC"
     }
     try:
-        response = requests.get(url, headers= headers, params= params, timeout= (3, 20))
+        response = session.get(url, headers= headers, params= params, timeout= (3, 20))
         response.raise_for_status()           
         return response.json()
     except ReadTimeout:

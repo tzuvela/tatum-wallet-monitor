@@ -8,5 +8,7 @@ venv/
 __pycache__/
 *.pyc
 
-# VS Code settings (optional)
+# VS Code settings 
 .vscode/
+# Ignore CSV's
+*.csv
