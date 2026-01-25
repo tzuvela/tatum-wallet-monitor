@@ -1,26 +1,62 @@
-Tatum wallet monitor
-Exports recent transaction history to transactions.csv for record-keeping
+# Tatum Wallet Monitor
 
-API / chain:
+Short Python utility that queries the Tatum Data API to monitor an Ethereum wallet
+and export recent transaction history to CSV for record-keeping.
 
-Tatum
+## Technology Used
 
-Ethereum testnet (Sepolia)
+- API provider: Tatum
+- Blockchain: Ethereum (Sepolia testnet by default)
 
-How to run:
+## How to run
 
-Create a virtual environment
+1. Create and activate a virtual environment
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   Configure environment variables (see below)
+   ```
 
-Install dependencies (pip install -r requirements.txt)
+Run the script:
 
-Set .env variables (API_KEY, CHAIN, WALLET_ADDRESS)
+python main.py
+Configuration
+This project uses environment variables to avoid hard-coding secrets
+and to make the script easy to reuse across environments.
 
-Run python main.py
+Copy the example file:
 
-Current limitations:
+cp .env.dist .env
+Fill in the required values:
 
+TATUM_API_KEY – your Tatum API key
+
+CHAIN – blockchain network to query
+Allowed values for this demo:
+
+sepolia (default, recommended)
+
+ethereum
+
+WALLET_ADDRESS – Ethereum-compatible wallet address
+
+Output
+Recent transactions are printed to the console
+
+Transaction history is exported to transactions.csv for record-keeping
+
+Current limitations
 Requests can time out
 
 Transaction list may include fees or internal transfers
 
 Output formatting is still a work in progress
+
+Relevant Tatum API Endpoints
+This project uses the following Tatum APIs:
+
+Ethereum balance (v3):
+https://apidoc.tatum.io/tag/Ethereum#operation/EthGetBalance
+
+Transaction history (v4 Data API):
+https://apidoc.tatum.io/tag/Data#operation/GetTransactions

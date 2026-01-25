@@ -15,7 +15,8 @@ if not API_KEY:
 
 BASE_URL = "https://api.tatum.io"
 
-# example Sepolia address
+# CHAIN controls which blockchain network is queried.
+# For this demo, supported values are: "sepolia", "ethereum"
 CHAIN = os.getenv("CHAIN")
 if not CHAIN:
     raise RuntimeError("CHAIN not set in .env")
